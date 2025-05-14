@@ -1,7 +1,7 @@
 'use client';
 import React, { Suspense, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import styles from '../src/app/page.module.css';
+import styles from './styles.module.css';
 
 // Import Scene with no SSR to ensure it only loads in browser
 const Scene = dynamic(() => import('../src/components/Scene'), {
