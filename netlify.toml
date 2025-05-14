@@ -1,6 +1,6 @@
 [build]
   command = "npm run build"
-  publish = ".next"
+  publish = "out"
   base = "/"
 
 [build.environment]
@@ -8,8 +8,9 @@
   NODE_VERSION = "18.20.8"
   NEXT_TELEMETRY_DISABLED = "1"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# For a static export we don't need the Netlify Next.js plugin
+# [[plugins]]
+#   package = "@netlify/plugin-nextjs"
 
 [[headers]]
   for = "/*"
