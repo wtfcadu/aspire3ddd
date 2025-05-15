@@ -50,6 +50,13 @@ export default function Model() {
     const backgroundRef = useRef(null);
     const objectGroup = useRef(null);
     
+    // Initial rotation values - exactly as requested
+    const initialRotation = useRef({
+        x: 4.8,
+        y: 0.2,
+        z: 0
+    });
+    
     // Text settings
     const [lineSpacing, setLineSpacing] = useState(0.8); // Adjust this value to change spacing
     
@@ -64,6 +71,20 @@ export default function Model() {
     // Mouse interaction states
     const [hovered, setHovered] = useState(false);
     const [clicked, setClicked] = useState(false);
+    
+    // Initialize rotation to match set values
+    useEffect(() => {
+        if (objectGroup.current) {
+            objectGroup.current.rotation.x = initialRotation.current.x;
+            objectGroup.current.rotation.y = initialRotation.current.y;
+            objectGroup.current.rotation.z = initialRotation.current.z;
+        }
+        
+        if (torus.current) {
+            // Reset the mesh rotation to the identity since we'll handle rotation at the group level
+            torus.current.rotation.set(0, 0, 0);
+        }
+    }, []);
     
     // Handle cursor appearance
     useEffect(() => {
@@ -94,6 +115,7 @@ export default function Model() {
     
     // Track previous mouse position for z-axis rotation
     const prevMouse = useRef({ x: 0, y: 0 });
+    const mouseOffset = useRef({ x: 0, y: 0 });
     
     useFrame((state, delta) => {
         // Automatic rotation (slower when interacted with)
@@ -107,26 +129,31 @@ export default function Model() {
             const deltaX = mouse.x - prevMouse.current.x;
             const deltaY = mouse.y - prevMouse.current.y;
             
-            // Smoother mouse follow with lerp for x and y rotation
-            objectGroup.current.rotation.y = THREE.MathUtils.lerp(
-                objectGroup.current.rotation.y, 
-                (mouse.x * Math.PI) / 10, 
+            // Update mouse offset
+            mouseOffset.current.x = THREE.MathUtils.lerp(
+                mouseOffset.current.x, 
+                mouse.x * Math.PI / 10, 
                 0.05
             );
-            objectGroup.current.rotation.x = THREE.MathUtils.lerp(
-                objectGroup.current.rotation.x, 
-                (mouse.y * Math.PI) / 10, 
+            
+            mouseOffset.current.y = THREE.MathUtils.lerp(
+                mouseOffset.current.y, 
+                mouse.y * Math.PI / 10, 
                 0.05
             );
+            
+            // Apply rotation while preserving initial values
+            objectGroup.current.rotation.x = initialRotation.current.x + mouseOffset.current.y;
+            objectGroup.current.rotation.y = initialRotation.current.y + mouseOffset.current.x;
             
             // Add subtle z-axis rotation based on mouse movement
             const zRotationFactor = 0.1; // Adjust this value to control z-rotation intensity
             const combinedDelta = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * Math.sign(deltaX + deltaY);
             
             if (!clicked) {
-                objectGroup.current.rotation.z = THREE.MathUtils.lerp(
-                    objectGroup.current.rotation.z,
-                    objectGroup.current.rotation.z + (combinedDelta * zRotationFactor),
+                objectGroup.current.rotation.z = initialRotation.current.z + THREE.MathUtils.lerp(
+                    objectGroup.current.rotation.z - initialRotation.current.z,
+                    (objectGroup.current.rotation.z - initialRotation.current.z) + (combinedDelta * zRotationFactor),
                     0.1
                 );
             }
@@ -175,12 +202,11 @@ export default function Model() {
                 {"EMPOWER\nGLOBAL\nINNOVATION"}
             </Text>
             
-            {/* Only the 3D object is interactive */}
-            <group ref={objectGroup} position={[0, 0, 20]}>
+            {/* Only the 3D object is interactive - with the exact rotation requested */}
+            <group ref={objectGroup} position={[0, 0, 20]} rotation={[4.8, 0.2, 0]}>
                 <mesh 
                     ref={torus} 
                     {...nodes.Cone001} 
-                    rotation={[4.8, 0.2, 0]}
                     onPointerOver={() => setHovered(true)}
                     onPointerOut={() => setHovered(false)}
                     onPointerDown={() => setClicked(true)}
